@@ -84,7 +84,7 @@ class TestClient(EClient):
 
         return requested_time
 
-class TestApp(TestWrapper, TestClient):
+class IBApi(TestWrapper, TestClient):
 
     def __init__(self, ipaddress, portid, clientid):
         TestWrapper.__init__(self)
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     print('before start')
 
     # specifies local host with port
-    app = TestApp("127.0.0.1", 7497, 0)
+    app = IBApi("127.0.0.1", 7497, 0)
 
     # indicates program begun
     print("Program started")

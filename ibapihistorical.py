@@ -1,6 +1,6 @@
-from ibapitest import *
+from ibapisetup import *
 
-app = TestApp('127.0.0.1', 7497, 0)
+app = IBApi('127.0.0.1', 7497, 0)
 
 print("program started")
 

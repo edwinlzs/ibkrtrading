@@ -2,9 +2,9 @@
 # http://interactivebrokers.github.io/tws-api/basic_orders.html
 # http://interactivebrokers.github.io/tws-api/order_submission.html
 
-from ibapitest import *
+from ibapisetup import *
 
-app = TestApp('127.0.0.1', 7497, 0)
+app = IBApi('127.0.0.1', 7497, 0)
 print("--program started--")
 requested_time = app.server_clock()
 print("Current server time:" + str(requested_time))
