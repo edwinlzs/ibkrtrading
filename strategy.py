@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from mplfinance.original_flavor import candlestick_ohlc
 from matplotlib.dates import date2num
 
-def RunStrategy(ticker, start_date, end_date):
+def backtest(ticker, start_date, end_date):
 
     cols = ['Open', 'High', 'Low', 'Close']
 
@@ -101,13 +101,17 @@ def RunStrategy(ticker, start_date, end_date):
         
         # trading signals
         # condition: candle above leading span A, Close above Conversion Line
-        if (values['HA_Low'] > values['Leading_Span_A']) & (values['HA_Close'] > values['Conversion_Line']) & (position == 0):
+        if ((values['HA_Low'] > values['Leading_Span_A']) &
+            # (values['HA_Low'] > values['Leading_Span_B']) &
+            (values['HA_Close'] > values['Conversion_Line']) & (position == 0)):
             position = 1
             entry_price = values['Open']
             HA.loc[date, 'Activity'] = 'entered'
             
         # condition: Close below Conversion Line, Close below Leading Span A
-        elif (values['HA_Close'] < values['Conversion_Line']) & (values['HA_Close'] < values['Leading_Span_A']) & (position == 1):
+        elif ((values['HA_Close'] < values['Leading_Span_A']) &
+            # (values['HA_Close'] < values['Leading_Span_B']) & 
+            (values['HA_Close'] < values['Conversion_Line']) & (position == 1)):
             position = 0
             exit_price = values['Open']
             change = (exit_price-entry_price)/entry_price
@@ -145,4 +149,48 @@ def RunStrategy(ticker, start_date, end_date):
     print('stdev: ' + str(round(bench_std*100,2)) + '%')
     print('sharpe: ' + str(round(bench_sharpe,2)) + '\n')
 
-RunStrategy('AMZN', dt.date(2008,1,1), dt.date(2019,3,22))
+def run_indicators(ticker):
+
+    end_date = dt.date.today()
+    start_date = end_date - BDay(60)
+
+    cols = ['Open', 'High', 'Low', 'Close']
+    df = yf.download(ticker, start_date, end_date)
+
+    ix = pd.bdate_range(start = start_date, end = end_date, freq = 'B')
+    HA = pd.DataFrame(index=ix)
+
+    # Creating HA Open & Close
+    HA[cols] = df[cols]
+    HA = HA.dropna()
+    HA['HA_Open'] = (
+        (HA['Open'].shift(1) + HA['Close'].shift(1))/2).dropna()
+    HA['HA_Close'] = (
+        (HA['Open'] + HA['Close'] + HA['High'] + HA['Close'])/4).dropna()
+
+    # Creating HA High & Low
+    high_cols = ['High', 'HA_Open', 'HA_Close']
+    HA['HA_High'] = HA[high_cols].max(axis=1)
+    low_cols = ['Low', 'HA_Open', 'HA_Close']
+    HA['HA_Low'] = HA[low_cols].min(axis=1)
+
+    # Ichimoku Indicators
+    HA['Conversion_Line'] = (HA['HA_High'].rolling(9).max() + HA['HA_Low'].rolling(9).min())/2
+    HA['Base_Line'] = (HA['HA_High'].rolling(26).max() + HA['HA_Low'].rolling(26).min())/2
+    HA['Leading_Span_A'] = (HA['Conversion_Line'] + HA['Base_Line'])/2
+    HA['Leading_Span_B'] = (HA['HA_High'].rolling(52).max() + HA['HA_Low'].rolling(52).min())/2
+    HA['Lagging_Span'] = HA['HA_Close'].shift(26)
+
+    # return the latest values of indicators
+    indicators = HA.iloc[len(HA.index)-1].copy()
+    if (indicators['HA_Low'] > indicators['Leading_Span_A']) & (indicators['HA_Close'] > indicators['Conversion_Line']):
+        indicators['Signal'] = "BUY" 
+    elif (indicators['HA_Close'] < indicators['Leading_Span_A']) & (indicators['HA_Close'] < indicators['Conversion_Line']):
+        indicators['Signal'] = "SELL" 
+    else:
+        indicators['Signal'] = "NEUTRAL"
+    return indicators
+
+# run_indicators('NVDA')
+# backtest('GOOG', dt.date(2008,1,1), dt.date(2019,3,22))
+# check_price('NVDA')

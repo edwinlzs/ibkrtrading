@@ -9,6 +9,7 @@ from ibapi.order import *
 from ibapi.common import *
 from threading import Thread
 import queue, datetime, time
+import pandas as pd
 
 class TestWrapper(EWrapper):
 
@@ -103,6 +104,9 @@ class IBApi(TestWrapper, TestClient):
 
         # variable to store historical data
         self.historical_data = []
+
+        # variable to store positions
+        self.all_positions = pd.DataFrame([], columns = ['Account','Symbol', 'Quantity', 'Average Cost', 'Sec Type'])
     
     # receiving historical data
     def historicalData(self, reqId, bar):
@@ -123,6 +127,14 @@ class IBApi(TestWrapper, TestClient):
 
     def execDetails(self, reqId, contract, execution):
         print('Order Executed: ', reqId, contract.symbol, contract.secType, contract.currency, execution.execId, execution.orderId, execution.shares, execution.lastLiquidity)
+
+    ###########
+    # checking positions
+    def position(self, account, contract, pos, avgCost):
+            index = str(account)+str(contract.symbol)
+            # specifically for class demo acct
+            if account == 'DU3307446':
+                self.all_positions.loc[index]= account, contract.symbol, pos, avgCost, contract.secType
 
 # want program to be run only when we run this specific script, not when it is imported, hence:
 
