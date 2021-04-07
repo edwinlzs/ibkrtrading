@@ -80,8 +80,9 @@ class TestClient(EClient):
         # loop checks for errors stored from get_error method in wrapper
         # if no error, server_clock method skips loop and returns value of time to print in execution area
         while self.wrapper.is_error():
-            print("Error:")
-            print(self.get_error(timeout=5))
+            # print("Error:")
+            # print(self.get_error(timeout=5))
+            self.get_error(timeout=5) # exhaust error list without printing - for when you not interested in errors
 
         return requested_time
 

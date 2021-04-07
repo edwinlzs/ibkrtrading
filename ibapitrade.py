@@ -12,8 +12,8 @@ def execute_trade(symbol, exchange, secType, currency, action, orderType, quanti
 
     app = IBApi('127.0.0.1', 7497, 0)
     print("--program started--")
-    requested_time = app.server_clock()
-    print("Current server time:" + str(requested_time))
+    # requested_time = app.server_clock()
+    # print("Current server time:" + str(requested_time))
     app.nextOrderId = app.reqIds(-1)
 
     # def run_loop():

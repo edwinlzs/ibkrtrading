@@ -3,11 +3,10 @@ from ibapitrade import execute_trade
 from ibapiportfolio import retrieve_positions
 from yahoo_fin import stock_info as si
 
-symbols = ['DM', 'GBTC', 'MXI', 'REMX', 'SAVA', 'SOL', 'TTD']
-
-actions = {}
-
 positions_df = retrieve_positions()
+symbols = positions_df['Symbol'].to_list()
+
+actions = {} # store the actions for each symbol
 
 for symbol in symbols:
 
@@ -20,7 +19,7 @@ for symbol in symbols:
 
     # checking for any sharp moves in current trading day
     if signal == "NEUTRAL":
-        actions[symbol] = {"Signal": signal, "Action": [None, None, None, None]}
+        actions[symbol] = {"Signal": signal, "Action": None, "Price": None, "Quantity": None, "OrderType": None}
 
     elif signal == "BUY":
         if position.empty: # no position yet
@@ -48,10 +47,11 @@ for symbol in symbols:
 
             investment_amount = float(input('how much to invest (USD)?: '))
             quantity = int(investment_amount/live_price)
-            actions[symbol] = {"Signal": signal, "Action": [signal, round(reference_price,2), int(quantity), orderType]}
+            actions[symbol] = {"Signal": signal, "Action": signal, "Price": round(reference_price,2),
+                        "Quantity": int(quantity), "OrderType": orderType}
 
         else: # already have position
-            actions[symbol] = {"Signal": signal, "Action": ['HOLD', None, None, None]}
+            actions[symbol] = {"Signal": signal, "Action": 'HOLD', "Price": None, "Quantity": None, "OrderType": None}
 
     elif signal == "SELL":
         if not position.empty: # have a position
@@ -78,10 +78,11 @@ for symbol in symbols:
                 reference_price = live_price
                 
             quantity = position['Quantity'].values[0]
-            actions[symbol] = {"Signal": signal, "Action": [signal, round(reference_price,2), int(quantity), orderType]}
+            actions[symbol] = {"Signal": signal, "Action": signal, "Price": round(reference_price,2),
+                        "Quantity": int(quantity), "OrderType": orderType}
 
         else: # no position
-            actions[symbol] = {"Signal": signal, "Action": ['HOLD', None, None, None]}
+            actions[symbol] = {"Signal": signal, "Action": 'HOLD', "Price": None, "Quantity": None, "OrderType": None}
 
     else:
         print("Signal error, please debug.")
@@ -90,19 +91,20 @@ print('\n\n Review Trade Execution:')
 print('SYMBOL\tSIGNAL\tACTION\tPRICE\tQTY\tORDERTYPE')
 for symbol,data in actions.items():
     signal = data['Signal']
-    action_list = data['Action']
-    print(symbol + '\t' + signal + '\t' + str(action_list[0]) + '\t' + str(action_list[1]) + '\t' + str(action_list[2]) + '\t' + str(action_list[3]))
+    action = data['Action']
+    price = data['Price']
+    quantity = data['Quantity']
+    orderType = data['OrderType']
+    print(symbol + '\t' + signal + '\t' + str(action) + '\t' + str(price) + '\t' + str(quantity) +
+        '\t' + str(orderType))
 
 proceed = input('\nProceed with Trades? [y/n]: ')
 if proceed == 'y':
     for symbol,data in actions.items():
         signal = data['Signal']
-        action_list = data['Action']
-        action = action_list[0]
-        price = action_list[1]
-        quantity = action_list[2]
-        orderType = action_list[3]
+        action = data['Action']
+        price = data['Price']
+        quantity = data['Quantity']
+        orderType = data['OrderType']
         if action in ['BUY', 'SELL']:
             execute_trade(symbol=symbol, exchange="SMART", secType="STK", currency="USD", action=signal, orderType=orderType, quantity=quantity, price=price)
-
-

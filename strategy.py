@@ -149,6 +149,9 @@ def backtest(ticker, start_date, end_date):
     print('stdev: ' + str(round(bench_std*100,2)) + '%')
     print('sharpe: ' + str(round(bench_sharpe,2)) + '\n')
 
+    return {'strat_mean':strat_mean, 'strat_std':strat_std, 'strat_sharpe':strat_sharpe,
+        'bench_mean':bench_mean, 'bench_std':bench_std, 'bench_sharpe':bench_sharpe}
+
 def run_indicators(ticker):
 
     end_date = dt.date.today()
@@ -189,7 +192,7 @@ def run_indicators(ticker):
         indicators['Signal'] = "SELL" 
     else:
         indicators['Signal'] = "NEUTRAL"
-    return indicators
+    return indicators.apply(lambda x:round(x,2) if type(x) == float else x)
 
 # run_indicators('NVDA')
 # backtest('GOOG', dt.date(2008,1,1), dt.date(2019,3,22))

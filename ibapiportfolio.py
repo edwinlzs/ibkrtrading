@@ -17,4 +17,5 @@ def retrieve_positions():
     return positions_df
 
 # positions_df = retrieve_positions()
+# print(positions_df)
 # print(positions_df[positions_df['Symbol'] == 'LMT'].empty)
